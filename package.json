@@ -1,0 +1,8 @@
+{
+    "name": "nftdotstorage",
+    "private": true,
+    "workspaces": [
+        "apps/api",
+        "apps/client"
+    ]
+}

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "outDir": "./dist",
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "types": ["node", "express", "jest"],
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "strict": true
+  }
+}

@@ -1,0 +1,69 @@
+:root {
+  --max-width: 1100px;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: SourceSansPro;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+td,
+th {
+  padding: 0.625em;
+}
+.divider {
+  padding: 0;
+}
+.tooltip {
+  visibility: hidden;
+  width: 300px;
+  background-color: black;
+  color: white;
+  text-align: left;
+  padding: 5px;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 3;
+  bottom: 125%;
+  left: 5%;
+  margin-left: -60px;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: black transparent transparent transparent;
+}
+
+.tooltipParent:hover .tooltip {
+  visibility: visible;
+}
+@font-face {
+  font-family: "ChicagoFLF";
+  src: url("../../public/assets/font/ChicagoFLF.ttf");
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: "SourceSansPro";
+  src: url("../../public/assets/font/source-sans-pro-latin-400-normal.ttf");
+  font-weight: normal;
+  font-style: normal;
+}

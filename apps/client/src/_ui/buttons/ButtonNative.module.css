@@ -1,0 +1,27 @@
+.dark {
+  background-color: #f5c32c;
+  color: black;
+  border: 1px solid black;
+  /* box-shadow:
+    0px -7px 0px 0px #fff inset,
+    0px -8px 0px 0px #000 inset; */
+}
+.transparent {
+  background-color: transparent;
+  border: 0px;
+}
+.light {
+  background-color: white;
+  color: black;
+  border: 1px solid #000;
+  /* box-shadow:
+    0px -7px 0px 0px #f5c32c inset,
+    0px -8px 0px 0px #000 inset; */
+}
+.active {
+  background: #fcecbe;
+  border: 1px solid #f5c32c;
+}
+.disable {
+  background-color: #dddddd;
+}
