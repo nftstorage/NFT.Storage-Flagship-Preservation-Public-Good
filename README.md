@@ -21,8 +21,7 @@ We aim to ensure long term storage, powered by smart contracts for ultimate tran
 
 
 **Getting started is easy**
-Integrate, store, safeguard. Affordable, lasting protection
-for your NFTs in 3 simple steps
+Integrate, store, safeguard. Affordable, lasting protection for your NFTs in 3 simple steps:
 
   **1. Upload your data to IPFS**
 Upload your NFT data to IPFS, where it's content addressed and made available in hot storage.
@@ -37,10 +36,10 @@ Send us your NFT data—CIDs, blockchain, contract address, and token IDs. We pr
 
 # HTTP API
 
-Check out the [HTTP API documentation]([https://nft.storage/api-docs](https://app.nft.storage/v1/docs/intro)).
+Check out the [HTTP API documentation](https://app.nft.storage/v1/docs/intro).
 
 # WEB APP
-Use the web app to buy storage and upload data. [Sign up to the web app]([[[https://nft.storage/api-docs](https://app.nft.storage/signup)].
+Use the web app to buy storage and upload data. [Sign up to the web app](https://app.nft.storage/signup)].
 
 # Contributing
 
