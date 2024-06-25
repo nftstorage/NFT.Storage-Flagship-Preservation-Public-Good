@@ -1,8 +1,10 @@
 # NFT.Storage
+<h1 align="center">
+  <a href="https://nft.storage"><img width="50%" src="https://user-images.githubusercontent.com/11778450/227269341-b2d804a7-1829-426c-9caa-ec519f98dc9c.png" alt="NFT.Storage logo" /></a>
+</h1>
 
-
-**Future-proof every NFT**
-Preserve your NFTs with our low-cost, easy-to-use solution. We aim to ensure verifiable long-term storage, powered by smart contracts and backed by our soon-to-be on-chain endowment for ultimate transparency.
+<h3 align="center">Future-proof every NFT.</h3>
+<h4 align="center">Preserve your NFTs with our low-cost, easy-to-use solution. We aim to ensure verifiable long-term storage, powered by smart contracts and backed by our soon-to-be on-chain endowment for ultimate transparency.</h4>
 
 
 **Seamless integration, timeless security**
