@@ -39,7 +39,7 @@ Send us your NFT data—CIDs, blockchain, contract address, and token IDs. We pr
 Check out the [HTTP API documentation](https://app.nft.storage/v1/docs/intro).
 
 # WEB APP
-Use the web app to buy storage and upload data. [Sign up to the web app](https://app.nft.storage/signup)].
+Use the web app to buy storage and upload data. [Sign up to the web app](https://app.nft.storage/signup).
 
 # Contributing
 
