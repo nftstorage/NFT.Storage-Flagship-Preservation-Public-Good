@@ -3,6 +3,7 @@
     "private": true,
     "workspaces": [
         "apps/api",
-        "apps/client"
+        "apps/client",
+        "apps/docs"
     ]
 }
