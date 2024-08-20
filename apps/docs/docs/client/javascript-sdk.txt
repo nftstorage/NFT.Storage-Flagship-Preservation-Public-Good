@@ -1,0 +1,64 @@
+---
+title: JavaScript SDK
+sidebar_position: 1
+---
+
+The NFT.Storage JavaScript SDK provides a convenient way to interact with the NFT.Storage API from JavaScript applications. Below are the available functions and their usage:
+
+## Installation
+
+You can install the NFT.Storage JavaScript SDK via npm:
+
+```bash
+npm install @nftstorage/sdk
+```
+
+## Usage
+
+### Creating Collections
+
+```
+const createCollection = async () => {
+  try {
+    const result = await nfts.create_collection('My Collection', '0x123...', 'Ethereum', 'mainnet');
+    console.log(result); // Response: "Collection Created"
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+createCollection();
+```
+
+### Adding Tokens to a Collection
+
+```
+const addTokens = async () => {
+  try {
+    const file = new File(['tokenID,CID\n1,baf...', 'tokens.csv']);
+    const result = await nfts.addTokens(file, 'your_collection_id');
+    console.log(result); // Response: "Collection uploaded successfully"
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+addTokens();
+```
+
+### Checking Token Status
+
+```
+const tokenStatus = async () => {
+  try {
+    const result = await nfts.tokenStatus('your_token_id', 'your_collection_id');
+    console.log(result); // Response: [{ cid: 'baf...', status: 'stored' }]
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+tokenStatus();
+```
+
+By using the JavaScript SDK, you can easily integrate NFT.Storage functionality into your JavaScript applications, allowing you to create collections, add tokens, and check token status with ease.
