@@ -1,6 +1,13 @@
 import { type NextFunction, type Request, type Response } from 'express'
 
-import { saveTokenRecords, createCollection, parseCSV, parseJSON, shipCidsToLighthouse } from './helper/index.js'
+import {
+  saveTokenRecords,
+  createCollection,
+  parseCSV,
+  parseJSON,
+  shipCidsToLighthouse,
+  dealStatus,
+} from './helper/index.js'
 import responseParser from '../../utils/responseParser.js'
 import listCollections from '../../db/collection/listCollections.js'
 import collectionDetails from '../../db/collection/collectionDetails.js'
@@ -75,6 +82,16 @@ export const list_tokens = async (req: any, res: Response, next: NextFunction) =
   }
 }
 
+export const deal_status = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const deals = await dealStatus(req.query.cid)
+    const data = responseParser(deals)
+    res.status(200).json(data)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const add_tokens = async (req: any, res: Response, next: NextFunction) => {
   try {
     if (!req.file || !req.body.collectionID) {
@@ -87,7 +104,10 @@ export const add_tokens = async (req: any, res: Response, next: NextFunction) =>
     }
 
     const fileData = req.file.buffer
-    const parsedData = req.file.mimetype === 'text/csv' ? await parseCSV(fileData) : await parseJSON(fileData)
+    const parsedData =
+      req.file.mimetype === 'text/csv'
+        ? await parseCSV(fileData, req.body.network)
+        : await parseJSON(fileData, req.body.network)
     const _ = await saveTokenRecords(parsedData.results, req.body.collectionID, req.body.user.userID)
     await updateTokenCount(req.body.user.userID, parsedData.results.length)
     await updateCollectionTokenCount(req.body.collectionID, parsedData.results.length)

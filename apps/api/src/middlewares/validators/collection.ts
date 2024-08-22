@@ -19,3 +19,9 @@ export const listTokenSchema = joi.object({
   }),
   lastKey: joi.string().max(100).default(null),
 })
+
+export const dealStatusSchema = joi.object({
+  cid: joi.string().max(100).required().messages({
+    'any.required': 'CID not found.',
+  }),
+})

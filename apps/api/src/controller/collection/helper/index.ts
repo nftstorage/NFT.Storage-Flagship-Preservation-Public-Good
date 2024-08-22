@@ -6,14 +6,15 @@ import * as isIPFS from 'is-ipfs'
 import config from '../../../config/index.js'
 import logger from '../../../utils/logger.js'
 import { TokenStatus, TokenObject } from '../../../types/collection.js'
-import { lighthouseAPIURL } from '../../../config/constants.js'
+import { filecoinFirstURL, lighthouseAPIURL } from '../../../config/constants.js'
 import addTokensInBatch from '../../../db/collection/addTokensInBatch.js'
 import createCollectionRecord from '../../../db/collection/createCollection.js'
 import getTokensByDealStatus from '../../../db/collection/getTokensByDealStatus.js'
 import updateTokenStatus from '../../../db/collection/updateTokenStatus.js'
 import updateCollectionCount from '../../../db/user/updateCollectionCount.js'
 import updateUserDataUsed from '../../../db/user/updateUserDataUsed.js'
-import getBalance from 'src/db/user/getBalance.js'
+import getBalance from '../../../db/user/getBalance.js'
+import CustomError from '../../../middlewares/error/customError.js'
 
 export const createCollection = async (
   userID: string,
@@ -41,7 +42,10 @@ export const createCollection = async (
   return collectionID
 }
 
-export const parseCSV = (csvData: Buffer): Promise<{ results: TokenObject[]; rejected: TokenObject[] }> => {
+export const parseCSV = (
+  csvData: Buffer,
+  network: string,
+): Promise<{ results: TokenObject[]; rejected: TokenObject[] }> => {
   return new Promise((resolve, reject) => {
     const results: TokenObject[] = []
     const rejected: TokenObject[] = []
@@ -49,19 +53,22 @@ export const parseCSV = (csvData: Buffer): Promise<{ results: TokenObject[]; rej
     stream
       .pipe(csv())
       .on('data', (data) => {
-        let tokenID = '',
-          cid = ''
+        let tokenID = ''
+        let tokenAddress = ''
+        let cid = ''
         Object.keys(data).forEach((key) => {
-          if (key.toLowerCase().includes('tokenid')) {
+          if (network === 'solana' && key.toLowerCase().includes('tokenaddress')) {
+            tokenAddress = data[key]
+          } else if (key.toLowerCase().includes('tokenid')) {
             tokenID = data[key]
           } else if (key.toLowerCase().includes('cid')) {
             cid = data[key]
           }
         })
-        if (isIPFS.cid(cid) && tokenID) {
-          results.push({ tokenID, cid })
+        if (isIPFS.cid(cid) && (tokenID || tokenAddress)) {
+          results.push({ tokenID: network === 'solana' ? tokenAddress : tokenID, cid })
         } else {
-          rejected.push({ tokenID, cid })
+          rejected.push({ tokenID: network === 'solana' ? tokenAddress : tokenID, cid })
         }
       })
       .on('end', () => {
@@ -73,14 +80,17 @@ export const parseCSV = (csvData: Buffer): Promise<{ results: TokenObject[]; rej
   })
 }
 
-export const parseJSON = (jsonData: Buffer): Promise<{ results: TokenObject[]; rejected: TokenObject[] }> => {
+export const parseJSON = (
+  jsonData: Buffer,
+  network: string,
+): Promise<{ results: TokenObject[]; rejected: TokenObject[] }> => {
   return new Promise((resolve, reject) => {
     const results: TokenObject[] = []
     const rejected: TokenObject[] = []
     try {
       const data = JSON.parse(jsonData.toString())
       data.forEach((item: any) => {
-        const tokenID = item.tokenID
+        const tokenID = network === 'solana' ? item.tokenAddress : item.tokenID
         const cid = item.cid as string
         if (isIPFS.cid(cid) && tokenID) {
           results.push({ tokenID, cid })
@@ -97,20 +107,13 @@ export const parseJSON = (jsonData: Buffer): Promise<{ results: TokenObject[]; r
 
 export const shipCidsToLighthouse = async (tokens: any) => {
   try {
-    for (let i = 0; i < tokens.length; i += 500) {
-      const data = []
-      for (let j = i; j < i + 500 && j < tokens.length; j++) {
-        data.push({
-          cid: tokens[j].cid,
-        })
-      }
-      const response = await fetch(`${lighthouseAPIURL}/api/lighthouse/migration_request`, {
-        method: 'POST',
+    for (let i = 0; i < tokens.length; i++) {
+      const response = await fetch(`${filecoinFirstURL}/api/v1/pin/add_cid?cid=${tokens[i].cid}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${config.lighthouse_api_key}`,
         },
-        body: JSON.stringify({ data: JSON.stringify(data) }),
       })
 
       if (!response.ok) {
@@ -155,52 +158,66 @@ export const refreshFileStatus = async () => {
   const userMap = new Map<string, { dataLimit: number; dataUsed: number }>()
   const cidList = await getTokensByDealStatus(TokenStatus.Started)
   for (let i = 0; i < cidList.length; i++) {
-    const response = await fetch(`${lighthouseAPIURL}/api/lighthouse/cid_pin_status?cid=${cidList[i].cid}`)
+    const response = await fetch(`${filecoinFirstURL}/api/v1/pin/cid_details?cid=${cidList[i].cid}`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${config.lighthouse_api_key}`,
+      },
+    })
     if (response.ok) {
-      const values = await response.json()
-      if (values.status !== 'queued') {
-        if (values.status === 'pinned') {
-          if (userMap.has(cidList[i].userID)) {
-            const usage = userMap.get(cidList[i].userID)
-            if (usage) {
-              usage.dataUsed += parseInt(values.fileSize)
-              if (usage.dataLimit - usage.dataUsed < 0) {
-                await updateTokenStatus(cidList[i].id, TokenStatus.DataCapExceed, parseInt(values.fileSize))
-                await updateUserDataUsed(cidList[i].userID, parseInt(values.fileSize))
-                await fetch(`${lighthouseAPIURL}/api/v1/pin/delete_cid?cid=${cidList[i].cid}`, {
-                  method: 'GET',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${config.lighthouse_api_key}`,
-                  },
-                })
-              } else {
-                await updateTokenStatus(cidList[i].id, TokenStatus.InQueue, parseInt(values.fileSize))
-                await updateUserDataUsed(cidList[i].userID, parseInt(values.fileSize))
-              }
-            }
-          } else {
-            const userBalance = await getBalance(cidList[i].userID)
-            userBalance.dataUsed += parseInt(values.fileSize)
-            userMap.set(cidList[i].userID, { dataLimit: userBalance.dataLimit, dataUsed: userBalance.dataUsed })
-            if (userBalance.dataLimit - userBalance.dataUsed < 0) {
-              await updateTokenStatus(cidList[i].id, TokenStatus.DataCapExceed, parseInt(values.fileSize))
-              await updateUserDataUsed(cidList[i].userID, parseInt(values.fileSize))
-              await fetch(`${lighthouseAPIURL}/api/v1/pin/delete_cid?cid=${cidList[i].cid}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  Authorization: `Bearer ${config.lighthouse_api_key}`,
-                },
-              })
-            } else {
-              await updateTokenStatus(cidList[i].id, TokenStatus.InQueue, parseInt(values.fileSize))
-              await updateUserDataUsed(cidList[i].userID, parseInt(values.fileSize))
-            }
+      const resp = await response.json()
+      const value = resp.value
+      if (!value || value.cidStatus === 'queued' || value.cidStatus == 'pinning-started') {
+        continue
+      }
+      if (value.cidStatus === 'pinning-failed') {
+        await updateTokenStatus(cidList[i].id, TokenStatus.PinningFailed, parseInt(value.fileSize))
+        continue
+      }
+      if (
+        value.cidStatus === 'pinned' ||
+        value.cidStatus === 'deal-making-started' ||
+        value.cidStatus === 'de-removed'
+      ) {
+        if (userMap.has(cidList[i].userID)) {
+          const usage = userMap.get(cidList[i].userID)
+          if (!usage) {
+            continue
           }
-        }
-        if (values.status === 'failed') {
-          await updateTokenStatus(cidList[i].id, TokenStatus.PinningFailed, parseInt(values.fileSize))
+          usage.dataUsed += parseInt(value.fileSize)
+          userMap.set(cidList[i].userID, { dataLimit: usage.dataLimit, dataUsed: usage.dataUsed })
+          if (usage.dataLimit - usage.dataUsed < 0) {
+            await updateTokenStatus(cidList[i].id, TokenStatus.DataCapExceed, parseInt(value.fileSize))
+            await updateUserDataUsed(cidList[i].userID, parseInt(value.fileSize))
+            await fetch(`${filecoinFirstURL}/api/v1/pin/delete_cid?cid=${cidList[i].cid}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.lighthouse_api_key}`,
+              },
+            })
+          } else {
+            await updateTokenStatus(cidList[i].id, TokenStatus.InQueue, parseInt(value.fileSize))
+            await updateUserDataUsed(cidList[i].userID, parseInt(value.fileSize))
+          }
+        } else {
+          const userBalance = await getBalance(cidList[i].userID)
+          userBalance.dataUsed += parseInt(value.fileSize)
+          userMap.set(cidList[i].userID, { dataLimit: userBalance.dataLimit, dataUsed: userBalance.dataUsed })
+          if (userBalance.dataLimit - userBalance.dataUsed < 0) {
+            await updateTokenStatus(cidList[i].id, TokenStatus.DataCapExceed, parseInt(value.fileSize))
+            await updateUserDataUsed(cidList[i].userID, parseInt(value.fileSize))
+            await fetch(`${filecoinFirstURL}/api/v1/pin/delete_cid?cid=${cidList[i].cid}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${config.lighthouse_api_key}`,
+              },
+            })
+          } else {
+            await updateTokenStatus(cidList[i].id, TokenStatus.InQueue, parseInt(value.fileSize))
+            await updateUserDataUsed(cidList[i].userID, parseInt(value.fileSize))
+          }
         }
       }
     }
@@ -220,14 +237,18 @@ export const refreshDealStatus = async () => {
   }
 }
 
-// export const getTokenStatus = async (collectionId: string, tokenId: string) => {
-//   const token = await getToken(collectionId, tokenId)
-//   if (!token) {
-//     throw new CustomError(404, 'Data Not Found.')
-//   }
-//   const url = `${dealStatusUrl}Qmah99npVfj9WRMfc172Ghk1qKdxF7BTYFLTD9Ph4wseTJ`
+export const dealStatus = async (cid: string) => {
+  if (!isIPFS.cid(cid)) {
+    throw new CustomError(400, 'Invalid CID.')
+  }
+  const response = await fetch(`${lighthouseAPIURL}/api/lighthouse/deal_status?cid=${cid}`)
+  if (!response.ok) {
+    logger.error('Error getting deal status for cid: ' + cid)
+    throw new CustomError(404, 'Deal status not found')
+  }
+  if (response.ok) {
+    const values = await response.json()
+    return values
+  }
+}
 
-//   const response = await axios.get(url)
-//   const { aggregateIn, lastUpdate, miner, ...rest } = response.data['0']
-//   return rest
-// }
