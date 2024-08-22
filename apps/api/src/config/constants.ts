@@ -20,6 +20,7 @@ const cacheClearTime = {
 }
 
 const lighthouseAPIURL = 'https://api.lighthouse.storage'
+const filecoinFirstURL = 'https://filecoin-first.lighthouse.storage'
 
 export {
   service,
@@ -36,4 +37,5 @@ export {
   CSVFileSizeLimit,
   cacheClearTime,
   lighthouseAPIURL,
+  filecoinFirstURL,
 }
