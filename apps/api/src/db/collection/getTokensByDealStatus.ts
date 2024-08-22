@@ -19,6 +19,7 @@ export default async (dealStatus: string): Promise<TokenList[]> => {
       ExpressionAttributeValues: {
         ':d': dealStatus,
       },
+      ScanIndexForward: false,
       ProjectionExpression: 'id, cid, fileSize, userID',
     }
 
