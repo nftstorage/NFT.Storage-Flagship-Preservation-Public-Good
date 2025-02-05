@@ -75,42 +75,52 @@ export default function SingleCollection() {
                     fontFamily="chicagoflf"
                     marginBottom={style.margin.xxs}
                   >
-                    Getting started with NFT.Storage!
+                    Get started
+                  </Text>
+                  <Text marginBottom={style.margin.xxs}>
+                    NFT.Storage provides long-term storage for your NFT data,
+                    aiming to ensure your digital assets are securely preserved,
+                    like a backup archive.
+                  </Text>
+                  <Text marginBottom={style.margin.xxs}>
+                    Follow these steps to start storing your NFTs:
                   </Text>
                   <div
                     style={{
                       height: "150px",
-                      padding: style.padding.sm,
+                      paddingLeft: style.padding.sm,
+                      paddingRight: style.padding.sm,
                     }}
                   >
-                    <Text marginBottom={style.margin.xxs}>
-                      To add your data to NFT.Storage follow these steps:
-                    </Text>
                     <ol>
                       <li>
-                        Prepare for your mint. Use an IPFS on-ramp to content
-                        address NFT data. We recommend{" "}
+                        <b>Purchase storage:</b> Access the dashboard to buy the
+                        storage capacity you need.
+                      </li>
+                      <li>
+                        <b>Mint your NFTs:</b> Use an IPFS on-ramp for your
+                        off-chain data. We recommend{" "}
                         <a
-                          href="https://www.pinata.cloud/nft-storage-pinata"
-                          style={{ textDecoration: "underline" }}
+                          href="https://pinata.cloud/nft-storage-pinata"
+                          target="_blank"
+                          style={{ textDecoration: "underline", color: "blue" }}
                         >
-                          Pinata
-                        </a>{" "}
+                          Pinata{" "}
+                        </a>
                         or{" "}
                         <a
-                          href="https://files.lighthouse.storage/?referby=NFTStorage"
-                          style={{ textDecoration: "underline" }}
+                          href="https://files.lighthouse.storage/"
+                          target="_blank"
+                          style={{ textDecoration: "underline", color: "blue" }}
                         >
-                          Lighthouse.
+                          Lighthouse{" "}
                         </a>
-                      </li>
-                      <li>Mint your NFTs on preferred network</li>
-                      <li>
-                        Buy storage from NFT.Storage for your off-chain data
+                        to ensure fast and decentralized uploads.
                       </li>
                       <li>
-                        Add items—the metadata and imagery CIDs, network minted
-                        on, contract address and token IDs—to be preserved.
+                        <b>Backup your NFT data:</b> Add your NFTs&#39; data to
+                        the NFT.Storage dashboard to secure your data with
+                        long-term, decentralized storage.
                       </li>
                     </ol>
                   </div>
