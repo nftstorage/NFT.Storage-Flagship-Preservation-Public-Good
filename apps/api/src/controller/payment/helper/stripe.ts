@@ -35,6 +35,7 @@ export const create_session_order = async (dataCap: number, userId: string, soci
     mode: 'payment',
     success_url: config.stripe_success_url,
     cancel_url: config.stripe_failure_url,
+    allow_promotion_codes: true,
   })
   return { url: session.url }
 }
