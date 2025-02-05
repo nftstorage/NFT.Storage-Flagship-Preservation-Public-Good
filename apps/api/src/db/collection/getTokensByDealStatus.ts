@@ -29,7 +29,6 @@ export default async (dealStatus: string): Promise<TokenList[]> => {
       const record: any = await dbbClient.query(params)
       elements.push(...(record.Items ?? []))
       exclusiveStartKey = record.LastEvaluatedKey
-      console.log(exclusiveStartKey)
     } while (exclusiveStartKey)
     return elements as TokenList[]
   } catch (error: any) {
