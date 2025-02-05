@@ -25,3 +25,15 @@ export const dealStatusSchema = joi.object({
     'any.required': 'CID not found.',
   }),
 })
+
+export const tokenIDSchema = joi.object({
+  tokenID: joi.string().max(100).required().messages({
+    'any.required': 'tokenID not found.',
+  }),
+})
+
+export const cidSchema = joi.object({
+  cid: joi.string().max(100).required().messages({
+    'any.required': 'CID not found.',
+  }),
+})
