@@ -9,6 +9,7 @@ const authTable = 'auth'
 const collectionTable = 'collection'
 const tokenTable = 'token'
 const transactionTable = 'transactions'
+const retryLogTable = 'retry-log'
 const pageSizeToken = 2000
 
 const pricePerGBInDollar = 2.99
@@ -38,4 +39,5 @@ export {
   cacheClearTime,
   lighthouseAPIURL,
   filecoinFirstURL,
+  retryLogTable,
 }

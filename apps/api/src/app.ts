@@ -13,7 +13,7 @@ import WebhookRouter from './routes/webhook.js'
 import errorHandler from './middlewares/error/index.js'
 import logger from './utils/logger.js'
 import config from './config/index.js'
-import { refreshFileStatus } from './controller/collection/helper/index.js'
+import { refreshFileStatus, refreshRetryTokenRecords } from './controller/collection/helper/index.js'
 import { refreshDealStatus } from './controller/collection/helper/index.js'
 
 const app = express()
@@ -54,6 +54,10 @@ if (config.environment === 'production') {
   const tokenDealCRON = cron.schedule('0 */6 * * *', () => {
     console.log('Running token deal status')
     refreshDealStatus()
+  })
+  const retryCRON = cron.schedule('0 0 * * *', () => {
+    console.log('Running retry')
+    refreshRetryTokenRecords()
   })
 }
 
