@@ -6,7 +6,7 @@ import {
   APIKeyIDSchema,
   gitOAuth,
 } from './auth.js'
-import { CreateCollectionSchema, collectionIdSchema, listTokenSchema, dealStatusSchema } from './collection.js'
+import { CreateCollectionSchema, collectionIdSchema, listTokenSchema, dealStatusSchema, tokenIDSchema } from './collection.js'
 import { purchaseDataCap } from './payment.js'
 
 export default {
@@ -21,4 +21,5 @@ export default {
   listTokenSchema,
   dealStatusSchema,
   purchaseDataCap,
+  tokenIDSchema,
 }
