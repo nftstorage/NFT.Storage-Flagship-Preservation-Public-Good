@@ -125,6 +125,7 @@ const useCollections = () => {
       }
 
       $loadUserTokens(allTokens);
+      console.log(allTokens);
       setFilteredData(allTokens);
     } catch (error) {
       console.error("Error fetching tokens:", error);
@@ -137,9 +138,11 @@ const useCollections = () => {
     const dataArray = dataObject.value;
     const dealIdsArray: any = [];
     dataArray.forEach((obj: any) => {
-      if (obj.hasOwnProperty("dealId")) {
-        dealIdsArray.push(obj.dealId);
-      }
+      obj.deal.forEach((deal: any) => {
+        if (deal.hasOwnProperty("dealId")) {
+          dealIdsArray.push(deal.dealId);
+        }
+      });
     });
     const joinedDealIds = dealIdsArray.join(",");
     return joinedDealIds;
