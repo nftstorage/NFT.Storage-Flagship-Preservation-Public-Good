@@ -79,13 +79,10 @@ For detailed API documentation, visit our [HTTP API documentation](https://app.n
 
 ## Recommended Hot Storage Providers
 
-We are excited to share our recommended hot storage partners, Pinata and Lighthouse. As an NFT.Storage user, choosing these partners ensures reliable hot storage solutions while supporting our platform and mission.
+We are excited to share our recommended hot storage partner - Lighthouse. As an NFT.Storage user, choosing these partners ensures reliable hot storage solutions while supporting our platform and mission.
 
-### How Using Pinata and Lighthouse Benefits You
-For new customers who sign up with Pinata and Lighthouse, these providers offer exceptional services for managing your NFT data on IPFS. By using our referral links, you also help support NFT.Storage's mission.
-
-### Pinata: Flexible and Powerful
-Pinata offers flexible plans and powerful, easy-to-use tools for managing your data on IPFS. Use code NFTSTORAGE50 at checkout to enjoy 50% off your first month. [Sign up today](https://pinata.cloud).
+### How Using Lighthouse Benefits You
+For new customers who sign up with Lighthouse, these providers offer exceptional services for managing your NFT data on IPFS. By using our referral links, you also help support NFT.Storage's mission.
 
 ### Lighthouse: Affordable and Flexible
 Lighthouse is an IPFS provider with unique payment options for NFT longevity. They offer affordability and flexibility for all your IPFS needs, including a pay-once and store-forever option. [Sign up today](https://lighthouse.storage).
