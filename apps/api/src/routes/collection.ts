@@ -7,6 +7,8 @@ import {
   add_tokens,
   list_tokens,
   deal_status,
+  delete_tokens,
+  retry_tokens,
 } from '../controller/collection/index.js'
 import validator from '../middlewares/validators/index.js'
 import validate from '../middlewares/validate.js'
@@ -31,6 +33,8 @@ router.get(
 
 router.post('/add_tokens', uploadFile.single('file'), authenticator(), add_tokens)
 router.get('/list_tokens', validate(validator.listTokenSchema, { query: true }), authenticator(), list_tokens)
+router.delete('/delete_tokens', validate(validator.tokenIDSchema, { query: true }), authenticator(), delete_tokens)
+router.get('/retry_tokens', authenticator(), retry_tokens)
 router.get('/deal_status', validate(validator.dealStatusSchema, { query: true }), authenticator(), deal_status)
 
 export default router

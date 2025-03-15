@@ -12,21 +12,26 @@ type TokenList = {
 
 export default async (dealStatus: string): Promise<TokenList[]> => {
   try {
-    const params = {
-      TableName: tokenTable,
-      IndexName: 'dealStatus-index',
-      KeyConditionExpression: 'dealStatus = :d',
-      ExpressionAttributeValues: {
-        ':d': dealStatus,
-      },
-      ScanIndexForward: false,
-      ProjectionExpression: 'id, cid, fileSize, userID',
-    }
-
-    const record = await dbbClient.query(params)
-    return (record.Items as TokenList[]) ?? []
+    let exclusiveStartKey
+    const elements = []
+    do {
+      const params = {
+        TableName: tokenTable,
+        IndexName: 'dealStatus-index',
+        KeyConditionExpression: 'dealStatus = :d',
+        ExpressionAttributeValues: {
+          ':d': dealStatus,
+        },
+        ScanIndexForward: false,
+        ProjectionExpression: 'id, cid, fileSize, userID',
+        ExclusiveStartKey: exclusiveStartKey
+      }
+      const record: any = await dbbClient.query(params)
+      elements.push(...(record.Items ?? []))
+      exclusiveStartKey = record.LastEvaluatedKey
+    } while (exclusiveStartKey)
+    return elements as TokenList[]
   } catch (error: any) {
-    console.log(error)
     logger.error(`Error in listing collection: ${error}`)
     throw new CustomError(500, `Internal Server Error.`)
   }

@@ -305,3 +305,46 @@ export const fetchDealID = async (cid: string) => {
     return error;
   }
 };
+export const deleteFailedFiles = async (tokenID: string) => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("Access token not found in local storage");
+    }
+    const response = await fetch(
+      `${config.server}/api/v1/collection/delete_tokens?tokenID=${tokenID}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return error;
+  }
+};
+
+export const retryFailedFiles = async () => {
+  try {
+    const accessToken = localStorage.getItem("accessToken");
+    if (!accessToken) {
+      throw new Error("Access token not found in local storage");
+    }
+    const response = await fetch(
+      `${config.server}/api/v1/collection/retry_tokens`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return error;
+  }
+};

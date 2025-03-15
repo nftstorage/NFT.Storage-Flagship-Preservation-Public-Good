@@ -7,6 +7,8 @@ import {
   parseJSON,
   shipCidsToLighthouse,
   dealStatus,
+  retryFailedTokenRecords,
+  deleteFailedTokenRecords,
 } from './helper/index.js'
 import responseParser from '../../utils/responseParser.js'
 import listCollections from '../../db/collection/listCollections.js'
@@ -107,29 +109,47 @@ export const add_tokens = async (req: any, res: Response, next: NextFunction) =>
       req.file.mimetype === 'text/csv'
         ? await parseCSV(fileData, req.body.network)
         : await parseJSON(fileData, req.body.network)
-    const _ = await saveTokenRecords(parsedData.results, req.body.collectionID, req.body.user.userID)
-    await updateTokenCount(req.body.user.userID, parsedData.results.length)
-    await updateCollectionTokenCount(req.body.collectionID, parsedData.results.length)
-    await shipCidsToLighthouse(parsedData.results)
+    const { newTokens, duplicateTokens } = await saveTokenRecords(
+      parsedData.results,
+      req.body.collectionID,
+      req.body.user.userID,
+    )
+    await updateTokenCount(req.body.user.userID, newTokens.length)
+    await updateCollectionTokenCount(req.body.collectionID, newTokens.length)
+    if (newTokens.length > 0) {
+      await shipCidsToLighthouse(newTokens)
+    }
+
     if (parsedData.rejected.length > 0) {
       throw new CustomError(400, `${parsedData.rejected.length} tokens rejected due to invalid CID or tokenID.`)
     }
-    const data = responseParser(`${parsedData.results.length} tokens added.`)
+    const data = responseParser(`${newTokens.length} new tokens added, ${duplicateTokens.length} duplicates saved.`)
     res.status(200).json(data)
   } catch (error) {
     next(error)
   }
 }
 
-// export const token_status = async (req: Request, res: Response, next: NextFunction) => {
-//   try {
-//     const tokenStatus = await getTokenStatus(
-//       req.query.collectionID as string,
-//       req.query.tokenID as string
-//     )
-//     const data = responseParser(tokenStatus)
-//     res.status(200).json(data)
-//   } catch (error) {
-//     next(error)
-//   }
-// }
+export const retry_tokens = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    await retryFailedTokenRecords(req.body.user.userID)
+    const responseMessage = `success`
+    const data = responseParser(responseMessage)
+    res.status(200).json(data)
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const delete_tokens = async (req: any, res: Response, next: NextFunction) => {
+  try {
+    const tokenID = await req.query.tokenID
+    await deleteFailedTokenRecords(tokenID, req.body.user.userID)
+
+    const responseMessage = `${tokenID} deleted successfully`
+    const data = responseParser(responseMessage)
+    res.status(200).json(data)
+  } catch (error) {
+    next(error)
+  }
+}

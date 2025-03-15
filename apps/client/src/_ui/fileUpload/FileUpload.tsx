@@ -106,7 +106,7 @@ export default function FileUpload({
           Click or drag CSV here to upload.
         </span>{" "}
         {/* <br /> */}
-        {hookCollections.$collectionNetwork !== "solana" ? (
+        {hookCollections.$collectionNetwork === "solana" ? (
           <span
             style={{
               fontFamily: "sans-serif",
@@ -115,7 +115,18 @@ export default function FileUpload({
               color: "#667085",
             }}
           >
-            CSV must include tokenID / cid match.
+            CSV must include tokenAddress / cid match.
+          </span>
+        ) : hookCollections.$collectionNetwork === "sui" ? (
+          <span
+            style={{
+              fontFamily: "sans-serif",
+              marginTop: style.margin.xxs,
+              fontSize: style.font.h7,
+              color: "#667085",
+            }}
+          >
+            CSV must include objectID / cid match.
           </span>
         ) : (
           <span
@@ -126,7 +137,7 @@ export default function FileUpload({
               color: "#667085",
             }}
           >
-            CSV must include tokenAddress / cid match.
+            CSV must include tokenID / cid match.
           </span>
         )}
       </label>

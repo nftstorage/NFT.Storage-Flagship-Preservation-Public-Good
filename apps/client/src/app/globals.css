@@ -63,7 +63,7 @@ th {
 }
 .tooltipStatus {
   visibility: hidden;
-  width: 100px;
+  width: fit-content;
   background-color: black;
   color: white;
   text-align: center;

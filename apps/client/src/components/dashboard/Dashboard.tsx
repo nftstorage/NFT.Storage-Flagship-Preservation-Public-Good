@@ -8,13 +8,18 @@ import ButtonNative from "@/_ui/buttons/ButtonNative";
 import InputLabel from "@/_ui/input/InputLabel";
 import useCollections from "@/hooks/useCollections";
 import IconBase from "@/_ui/icons/IconBase";
-import TableNative from "@/_ui/table/TableNative";
+import TableNative, { formatTimestamp } from "@/_ui/table/TableNative";
 import Modal from "@/_ui/modal/Modal";
 import Dropdown from "@/_ui/dropdown/Dropdown";
-import { tokenUpload } from "@/services/ApiService";
+import {
+  deleteFailedFiles,
+  retryFailedFiles,
+  tokenUpload,
+} from "@/services/ApiService";
 import toast from "react-hot-toast";
 import FileUpload from "@/_ui/fileUpload/FileUpload";
 import Checkbox from "@/_ui/checkbox/Checkbox";
+import FilterButton from "@/_ui/buttons/FilterButton";
 
 const Dashboard = () => {
   const [addToken, setAddToken] = useState(false);
@@ -23,9 +28,91 @@ const Dashboard = () => {
   const [uploadedFile, setUploadedFile] = useState<any>(null);
   const [disable, setDisable] = useState<boolean>(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [showFailedTokens, setShowFailedTokens] = useState(false);
+  const [failedFiles, setFailedFiles] = useState<any[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const handleCheckboxChange = (isChecked: boolean) => {
     setIsChecked(isChecked);
+  };
+
+  const closeFailedTokensModal = () => {
+    setShowFailedTokens(false);
+  };
+
+  const downloadFailedFilesList = () => {
+    // Create CSV content
+    const headers = ["Date Uploaded", "Token ID", "CID", "Size"];
+
+    // Convert failed files to CSV rows
+    const csvContent = [
+      headers.join(","),
+      ...failedFiles.map((file) =>
+        [file.dateUploaded, file.tokenId, file.cid, file.size]
+          .map((value) => `"${value}"`)
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create a Blob with the CSV content
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+
+    link.href = URL.createObjectURL(blob);
+    link.download = "failed-files.csv";
+    link.style.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDeleteFiles = async () => {
+    try {
+      setIsDeleting(true);
+      for (const file of failedFiles) {
+        const response = await deleteFailedFiles(file.tokenId);
+        if (response.ok) {
+          toast.success(`${file.tokenId} deleted successfully`, {
+            duration: 4000,
+          });
+        } else {
+          toast.error(response.error.message, {
+            duration: 4000,
+          });
+        }
+      }
+      closeFailedTokensModal();
+      await hookCollections.fetchTokens();
+    } catch (error) {
+      console.error("Error deleting files:", error);
+      toast.error("Failed to delete files");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleRetryFiles = async () => {
+    try {
+      setIsRetrying(true);
+      const response = await retryFailedFiles();
+      if (response.ok) {
+        toast.success(`Retried successfully`, {
+          duration: 4000,
+        });
+      } else {
+        toast.error(response.error.message, {
+          duration: 4000,
+        });
+      }
+      closeFailedTokensModal();
+      await hookCollections.fetchTokens();
+    } catch (error) {
+      console.error("Error retrying files:", error);
+      toast.error("Failed to retry files");
+    } finally {
+      setIsRetrying(false);
+    }
   };
 
   const hookCollections = useCollections();
@@ -33,6 +120,29 @@ const Dashboard = () => {
   useEffect(() => {
     hookCollections.fetchTokens();
   }, []);
+  useEffect(() => {
+    const failedFilesList: any[] = [];
+
+    hookCollections.$userTokens.map((row: any) => {
+      if (row.dealStatus === "pinning-failed") {
+        try {
+          const fileDetails = {
+            dateUploaded: formatTimestamp(row.createdAt),
+            tokenId: row.id,
+            cid: row.cid,
+            size: row.fileSize,
+          };
+          failedFilesList.push(fileDetails);
+        } catch (error) {
+          console.log("error fetching failed files");
+        }
+      }
+    });
+    if (failedFilesList.length > 0) {
+      setFailedFiles(failedFilesList);
+      setShowFailedTokens(true);
+    }
+  }, [hookCollections.$userTokens]);
 
   const openTokenModal = () => {
     setAddToken(true);
@@ -66,20 +176,39 @@ const Dashboard = () => {
     }
 
     let tempContractAddress = hookCollections.$collectionContractAddress;
+    const generateUniqueString = () =>
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+    const networksRequireUniqueAddress = [
+      "solana",
+      "multiversx",
+      "sui",
+      "cardano",
+    ];
 
     if (
       !tempContractAddress &&
-      hookCollections.$collectionNetwork !== "solana"
+      !networksRequireUniqueAddress.includes(hookCollections.$collectionNetwork)
     ) {
-      toast.error("Please enter contract address");
+      toast.error(
+        hookCollections.$collectionNetwork == "counterparty"
+          ? "Please enter Asset Name"
+          : hookCollections.$collectionNetwork == "xrpl"
+            ? "Please enter Issuer address"
+            : hookCollections.$collectionNetwork == "xahau"
+              ? "Please enter Hooks Address"
+              : "Please enter Contract Address"
+      );
       setDisable(false);
       return;
     }
     if (
-      hookCollections.$collectionNetwork === "solana" &&
+      networksRequireUniqueAddress.includes(
+        hookCollections.$collectionNetwork
+      ) &&
       !tempContractAddress
     ) {
-      tempContractAddress = "undefined";
+      tempContractAddress = generateUniqueString();
       hookCollections.$loadCollectionContractAddress(tempContractAddress);
     }
     if (file.type === "text/csv" || file.type === "application/json") {
@@ -148,21 +277,6 @@ const Dashboard = () => {
                   ).collectionID
             );
             formData.append("network", hookCollections.$collectionNetwork);
-            // await toast.promise(
-            //   tokenUpload(formData),
-            //   {
-            //     loading: "Uploading tokens...",
-            //     success: (response: any) => {
-            //       if (response.ok == true) {
-            //         return response.value;
-            //       } else {
-            //         return response.error.message;
-            //       }
-            //     },
-            //     error: "Error uploading tokens 1",
-            //   },
-            //   { duration: 5000 }
-            // );
             toast.loading("Uploading tokens...");
             const response = await tokenUpload(formData);
             if (response.ok) {
@@ -233,6 +347,16 @@ const Dashboard = () => {
 
   const onFileUpload = async (file: File) => {
     setUploadedFile(file);
+  };
+
+  const handleFilterApply = async (status: any) => {
+    const filteredArray = hookCollections.$userTokens.filter(
+      (item: any) => item.dealStatus === status
+    );
+    hookCollections.setFilteredData(filteredArray);
+    if (status == "all") {
+      hookCollections.setFilteredData(hookCollections.$userTokens);
+    }
   };
 
   const getTooltipContent = () => {
@@ -343,6 +467,61 @@ const Dashboard = () => {
       label: "Zora",
       icon: <IconBase slug="logo-zora" />,
     },
+    {
+      value: "hedera",
+      label: "Hedera Hashgraph",
+      icon: <IconBase slug="logo-hedera" />,
+    },
+    {
+      value: "cronos",
+      label: "Cronos",
+      icon: <IconBase slug="logo-cronos" />,
+    },
+    {
+      value: "shape",
+      label: "Shape",
+      icon: <IconBase slug="logo-shape" />,
+    },
+    {
+      value: "blast",
+      label: "Blast",
+      icon: <IconBase slug="logo-blast" />,
+    },
+    {
+      value: "apeChain",
+      label: "ApeChain",
+      icon: <IconBase slug="logo-ape" />,
+    },
+    {
+      value: "mint",
+      label: "Mint",
+      icon: <IconBase slug="logo-mint" />,
+    },
+    {
+      value: "xrpl",
+      label: "XRPL",
+      icon: <IconBase slug="logo-xrpl" />,
+    },
+    {
+      value: "xahau",
+      label: "Xahau",
+      icon: <IconBase slug="logo-xahau" />,
+    },
+    {
+      value: "sui",
+      label: "Sui",
+      icon: <IconBase slug="logo-sui" />,
+    },
+    {
+      value: "multiversx",
+      label: "Multiversx",
+      icon: <IconBase slug="logo-multiversx" />,
+    },
+    {
+      value: "counterparty",
+      label: "Counterparty",
+      icon: <IconBase slug="logo-counterparty" />,
+    },
   ];
   return (
     <>
@@ -366,10 +545,11 @@ const Dashboard = () => {
             }}
           >
             <FlexColumn
-              padding="1.5rem "
+              padding="1.5rem"
               vrAlign="flex-start"
               height="fit-content"
               hrAlign="flex-start"
+              zIndex={"1"}
             >
               <FlexRow width="fit-content" marginBottom={"xs"}>
                 <Text
@@ -413,15 +593,7 @@ const Dashboard = () => {
                       hookCollections.setFilteredData(filtered);
                     }}
                   />
-                  <ButtonNative
-                    text="Filters"
-                    width="100px"
-                    hrAlign={"center"}
-                    // paddingBottom="9px"
-                    // paddingTop="9px"
-                    iconLeft={{ slug: "icon-filter" }}
-                    borderColor="#000"
-                  />
+                  <FilterButton onFilterApply={handleFilterApply} />
                 </FlexRow>
                 {hookCollections.$userTokens.length ? (
                   <ButtonNative
@@ -507,22 +679,34 @@ const Dashboard = () => {
                 Upload Item(s)
               </Text>
 
-              <InputLabel
-                placeholder={
-                  hookCollections.$collectionNetwork == "solana"
-                    ? "Verified Collection Address (Optional)"
-                    : "Contract Address"
-                }
-                inputValue={hookCollections?.$collectionContractAddress}
-                width="100%"
-                marginBottom={style.margin.sm}
-                onChange={(e: any) => {
-                  let collectionContractAddress = e.target.value;
-                  hookCollections.$loadCollectionContractAddress(
-                    collectionContractAddress
-                  );
-                }}
-              />
+              {!["multiversx", "sui"].includes(
+                hookCollections.$collectionNetwork
+              ) && (
+                <InputLabel
+                  placeholder={
+                    hookCollections.$collectionNetwork == "solana"
+                      ? "Verified Collection Address (Optional)"
+                      : hookCollections.$collectionNetwork == "counterparty"
+                        ? "Asset Name"
+                        : hookCollections.$collectionNetwork == "xrpl"
+                          ? "Issuer address"
+                          : hookCollections.$collectionNetwork == "cardano"
+                            ? "Contract Address(Optional)"
+                            : hookCollections.$collectionNetwork == "xahau"
+                              ? "Hooks Address"
+                              : "Contract Address"
+                  }
+                  inputValue={hookCollections?.$collectionContractAddress}
+                  width="100%"
+                  marginBottom={style.margin.sm}
+                  onChange={(e: any) => {
+                    let collectionContractAddress = e.target.value;
+                    hookCollections.$loadCollectionContractAddress(
+                      collectionContractAddress
+                    );
+                  }}
+                />
+              )}
               <Dropdown
                 placeholdericon={<IconBase slug="icon-chain" />}
                 options={options}
@@ -592,19 +776,26 @@ const Dashboard = () => {
               <FlexRow width="fit-content">
                 <IconBase slug="icon-info" />
                 <Text marginLeft={style.margin.xxs}>What should I upload?</Text>
-                {hookCollections.$collectionNetwork !== "solana" ? (
-                  <div className="tooltip">
-                    Only CSVs are accepted.
-                    <br /> Header row must be: tokenID, cid <br />
-                    Each row must include a tokenID and cid match in seperate
-                    columns
-                  </div>
-                ) : (
+                {hookCollections.$collectionNetwork === "solana" ? (
                   <div className="tooltip">
                     Only CSVs are accepted.
                     <br /> Header row must be: tokenAddress, cid <br />
                     Each row must include a tokenAddress and cid match in
                     seperate columns
+                  </div>
+                ) : hookCollections.$collectionNetwork === "sui" ? (
+                  <div className="tooltip">
+                    Only CSVs are accepted.
+                    <br /> Header row must be: objectID, cid <br />
+                    Each row must include a objectID and cid match in seperate
+                    columns
+                  </div>
+                ) : (
+                  <div className="tooltip">
+                    Only CSVs are accepted.
+                    <br /> Header row must be: tokenID, cid <br />
+                    Each row must include a tokenID and cid match in seperate
+                    columns
                   </div>
                 )}
               </FlexRow>
@@ -682,6 +873,51 @@ const Dashboard = () => {
                 OK
               </ButtonNative>
             </div>
+          </FlexRow>
+        }
+      />
+      <Modal
+        isOpen={showFailedTokens}
+        onClose={closeFailedTokensModal}
+        size="md"
+        body={
+          <>
+            <FlexColumn>
+              <p>The following files have encountered issues:</p>
+              <button
+                onClick={downloadFailedFilesList}
+                style={{
+                  background: "#fff",
+                  padding: "6px 12px",
+                  marginTop: "12px",
+                  cursor: "pointer",
+                }}
+              >
+                Failed files list
+              </button>
+            </FlexColumn>
+          </>
+        }
+        footer={
+          <FlexRow hrAlign="center">
+            <ButtonNative
+              marginRight="sm"
+              variant="light"
+              onClick={handleDeleteFiles}
+              width="130px"
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete failed files"}
+            </ButtonNative>
+
+            <ButtonNative
+              variant="dark"
+              onClick={handleRetryFiles}
+              width="120px"
+              disabled={isRetrying}
+            >
+              {isRetrying ? "Retrying..." : "Retry failed files"}
+            </ButtonNative>
           </FlexRow>
         }
       />
