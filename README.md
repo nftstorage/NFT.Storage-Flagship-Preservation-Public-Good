@@ -13,8 +13,8 @@ NFT.Storage uses Filecoin's robust decentralized storage network to ensure the l
 ### A Small Price to Preserve NFT Value
 Designed to enable the long-term preservation of NFT data in the decentralized, verifiable Filecoin Network, charging only a small one-time fee.
 
-### ‍Integrated with the Token Checker
-Provides seamless integration for dapps to ensure NFTs are verifiably stored and preserved.
+### ‍Integrated with the Storage Checker
+Provides seamless integration for dapps to aim to ensure NFTs are verifiably stored and preserved.
 
 ### All Backed by Our On-chain Endowment
 We aim to ensure long-term storage, powered by smart contracts for ultimate transparency and trust.
@@ -36,9 +36,9 @@ Integrate, store, safeguard. Affordable, lasting protection for your NFTs in 3 s
 3. **Send Your NFT Data to Us for Long-term Preservation**
    - Send us your NFT data—CIDs, blockchain, contract address, and token IDs. We preserve the off-chain data, and our NFT Token Checker confirms collection preservation for integrated apps to display the badge.
 
-## Preservation Status Checker API
+## Preservation Storage Checker API
 
-Our Preservation Status Checker API allows you to verify the preservation status of any NFT preserved with NFT.Storage. This public API endpoint is rate-limited to ensure fair usage while providing reliable API-based access to preservation information.
+Our Preservation Storage Checker API allows you to verify the preservation status of any NFT preserved with NFT.Storage. This public API endpoint is rate-limited to ensure fair usage while providing reliable API-based access to preservation information.
 
 ### Using the API
 
@@ -96,11 +96,11 @@ Use the web app to buy storage and upload data. [Sign up to the web app](https:/
 
 ## NFT.Storage Relies on Your Support
 
-Join us in our mission to build and maintain valuable public goods for the NFT community. Support us [Support us](https://nft.storage/support-us) by joining our community, forming a strategic partnership, or making a donation.
+Join us in our mission to build and maintain valuable public goods for the NFT community. Support us [Support us](https://nft.storage/support-us) by forming a strategic partnership, or making a donation.
 
 # Contributing
 
-Feel free to join in. All arewelcome. If you're opening a pull request, please see the [guidelines in DEVELOPMENT.md](./DEVELOPMENT.md#how-should-i-write-my-commits) on structuring your commit messages so that your PR will be compatible with our [release process](./DEVELOPMENT.md#release).
+Feel free to join in. All are welcome. If you're opening a pull request, please see the [guidelines in DEVELOPMENT.md](./DEVELOPMENT.md#how-should-i-write-my-commits) on structuring your commit messages so that your PR will be compatible with our [release process](./DEVELOPMENT.md#release).
 
 # License
 
